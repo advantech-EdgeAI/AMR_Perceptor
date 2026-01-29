@@ -1,93 +1,104 @@
-# amr_perceptor_github
+# Advantech AMR Perceptor
 
+The Advantech AMR Perceptor is an advanced AI intelligence layer designed as an extension of the Advantech AMR DevKit. While the DevKit provides the "Body" (hardware drivers and physical models), the Perceptor provides the "Brain".
 
+This package is a demo scenario that adds high-level perception and reasoning to the robot. It depends entirely on the hardware foundation established by the AMR DevKit. By using the Perceptor, your robot can identify objects in 3D space, understand its surroundings, and communicate with users through a chat interface.
 
-## Getting started
+## Key Features
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+- **Intelligence Extension**: This project is built specifically to extend the AMR DevKit. It transforms raw sensor data into actionable AI insights.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+- **Built-in Data Optimization**: Implements specialized nodes for image resizing and pointcloud downsampling. This ensures that the AI models run efficiently on the Advantech MIC-732-AO without overloading the system.
 
-## Add your files
+- **3D Object Detection**: Uses YOLOv8 to detect objects (like people, vehicles, or tools) and calculates their exact 3D position relative to the robot.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+- **Natural Language Reasoning**: Integrates Llama.cpp and an MCP (Model Context Protocol) Server. This allows the robot to "reason" about what it sees and answer questions like "Where is the person?" in plain English.
 
+- **Interactive Web UI**: Provides a user-friendly chat interface via Open-WebUI, allowing you to interact with the AMR from any web browser to enhance demo experience.
+
+## System Architecture
+
+The AMR Perceptor acts as the "Intelligence Layer" sitting on top of the AMR DevKit "Hardware Layer." The following diagram illustrates the data flow from physical sensors to the user interface:
+
+- **Input Layer (AMR DevKit Dependency)**: Receives raw camera (GMSL/Fisheye) and LiDAR data from the AMR DevKit drivers.
+
+- **Vision Engine**: The YOLOv8 node analyzes the optimized data to detect objects and determine their 3D coordinates using the spatial transforms provided by the DevKit.
+
+- **Semantic Context (MCP)**: The ROS Agent collects these 3D detections and serves them to the Large Language Model (LLM) through the Model Context Protocol (MCP).
+
+- **User Interaction**: The LLM processes user queries via Open-WebUI, providing natural language answers based on the robot's real-time environmental data.
+
+## Installation Guide
+
+The Perceptor package uses Docker to manage complex AI dependencies and ensure a stable environment.
+
+### 1. Install AMR DevKit
+
+The Perceptor requires the AMR DevKit to be installed and configured first. Please refer to the for hardware setup and driver installation.
+
+### 2. Install Docker Engine
+
+If Docker is not installed, please follow the [instructions](https://github.com/advantech-EdgeAI/AMR_DevKit/issues/1) to set it up.
+
+## Usage / Quick Start
+
+### 1. Initialize the Hardware (DevKit)
+
+In a new terminal, launch the AMR DevKit drivers. Using `yolo_rviz:=true` opens a viewer that shows AI detection results.:
+
+```bash
+ros2 launch amr_description bringup.launch.py yolo_rviz:=true preprocess:=true
 ```
-cd existing_repo
-git remote add origin https://172.17.4.45/isystem-ai-solution-engineering/amr_perceptor_github.git
-git branch -M main
-git push -uf origin main
+
+⚠️ **Important Notice**
+
+To prevent system crashes or errors, always close the RViz window first before using `Ctrl+C` to stop the processes in your terminals.
+
+### 2. Start YOLO, MCP, llama.cpp, and Web UI
+
+```bash
+$ docker compose up -d
+
+[+] Running 4/4
+ ✔ Container llamacpp_server_container  Healthy    11.4s
+ ✔ Container yolo_container             Started     1.0s
+ ✔ Container mcp_container              Healthy     5.9s
+ ✔ Container open_webui_container       Started    12.1s
 ```
 
-## Integrate with your tools
+### 3. Open Web UI in browser
 
-- [ ] [Set up project integrations](https://172.17.4.45/isystem-ai-solution-engineering/amr_perceptor_github/-/settings/integrations)
+Navigate to the URL: `http://<IP of your device>:9988`
 
-## Collaborate with your team
+### 4. Open Admin Panel
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+### 5. Configure llama.cpp
 
-## Test and Deploy
+Specifiy `http://llamacpp:10000/v1` as URL. Use the 🔄 button (next to the URL) to test the connection with llama.cpp.
 
-Use the built-in continuous integration in GitLab.
+### 6. Configure MCP
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+Specify `http://mcpo:9000` as URL and "ROS mcp server" as name. Use the 🔄 button (next to the URL) to test the connection with MCP server.
 
-***
+### 7. Import Default Prompt Suggestions
 
-# Editing this README
+Import the predifined prompts by uploading the file: `ros_agent_prompt_suggestions.json`.
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+### 8. Import Workspace
 
-## Suggestions for a good README
+Import the predifined workspace by uploading the file: `ros_agent_model.json`. The ROS Agent model will be added.
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+### 9. Edit Model Setting
 
-## Name
-Choose a self-explaining name for your project.
+Select base model for ROS Agent: `gpt-oss-20b-Q4_K_M.gguf`
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+### 10. Interact with AMR
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+Use the suggested prompt: Get the surroundings. Ensure all the services are working together by checking objects' 3D positions.
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+### 12. Close All Services
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+```bash
+docker compose down
+```
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
