@@ -20,6 +20,8 @@ This package is a demo scenario that adds high-level perception and reasoning to
 
 The AMR Perceptor acts as the "Intelligence Layer" sitting on top of the AMR DevKit "Hardware Layer." The following diagram illustrates the data flow from physical sensors to the user interface:
 
+![](media/images/perceptor_architecture.jpg)
+
 - **Input Layer (AMR DevKit Dependency)**: Receives raw camera (GMSL/Fisheye) and LiDAR data from the AMR DevKit drivers.
 
 - **Vision Engine**: The YOLOv8 node analyzes the optimized data to detect objects and determine their 3D coordinates using the spatial transforms provided by the DevKit.
@@ -50,6 +52,8 @@ In a new terminal, launch the AMR DevKit drivers. Using `yolo_rviz:=true` opens 
 ros2 launch amr_description bringup.launch.py yolo_rviz:=true preprocess:=true
 ```
 
+![](media/images/yolo.jpg)
+
 ⚠️ **Important Notice**
 
 To prevent system crashes or errors, always close the RViz window first before using `Ctrl+C` to stop the processes in your terminals.
@@ -72,29 +76,43 @@ Navigate to the URL: `http://<IP of your device>:9988`
 
 ### 4. Open Admin Panel
 
+![](media/images/open_admin_panel.png)
+
 ### 5. Configure llama.cpp
 
 Specifiy `http://llamacpp:10000/v1` as URL. Use the 🔄 button (next to the URL) to test the connection with llama.cpp.
+
+![](media/images/set_llamacpp.png)
 
 ### 6. Configure MCP
 
 Specify `http://mcpo:9000` as URL and "ROS mcp server" as name. Use the 🔄 button (next to the URL) to test the connection with MCP server.
 
+![](media/images/set_mcp.png)
+
 ### 7. Import Default Prompt Suggestions
 
 Import the predifined prompts by uploading the file: `ros_agent_prompt_suggestions.json`.
+
+![](media/images/set_prompt_suggestions.png)
 
 ### 8. Import Workspace
 
 Import the predifined workspace by uploading the file: `ros_agent_model.json`. The ROS Agent model will be added.
 
+![](media/images/import_workspace.png)
+
 ### 9. Edit Model Setting
 
 Select base model for ROS Agent: `gpt-oss-20b-Q4_K_M.gguf`
 
+![](media/images/edit_ros_agent.png)
+
 ### 10. Interact with AMR
 
 Use the suggested prompt: Get the surroundings. Ensure all the services are working together by checking objects' 3D positions.
+
+![](media/images/interact_ros_agent.png)
 
 ### 12. Close All Services
 
