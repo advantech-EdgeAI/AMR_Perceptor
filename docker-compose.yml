@@ -1,0 +1,107 @@
+services:
+  yolo:
+    container_name: yolo_container
+    image: ispsae/amr_yolo:latest
+    network_mode: host
+    stdin_open: true
+    tty: true
+    command: >
+      ros2 launch amr_perceptor yolo.launch.py sensor_prefix:=${SENSOR_ID} rosbridge_port:=${ROS__BRIDGE}
+    working_dir: /ros2_ws
+    environment:
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+      ROS_WS: /ros2_ws
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID}
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'source /opt/ros/install/setup.bash && export ROS_DOMAIN_ID=${ROS_DOMAIN_ID} && ros2 topic list --no-daemon | grep -q \"^/yolo/detections$$\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    volumes:
+      - ./rospkg:/ros2_ws/src
+
+  mcpo:
+    container_name: mcp_container
+    image: ispsae/amr_mcp:latest
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    stdin_open: true
+    tty: true
+    command: >
+      mcpo --port ${ROS__MCP} -- uv run server.py
+    ports:
+      - "${ROS__MCP}:${ROS__MCP}"
+    environment:
+      ROSBRIDGE_IP: host.docker.internal
+      ROSBRIDGE_PORT: ${ROS__BRIDGE}
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost ${ROS__MCP} || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 60
+      start_period: 120s
+
+  llamacpp:
+    container_name: llamacpp_server_container
+    image: ispsae/amr_llamacpp
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+    command: >
+      ./llama.cpp/build/bin/llama-server
+      --model gpt-oss-20b-Q4_K_M.gguf
+      --port ${AI__LLAMACPP}
+      --host 0.0.0.0
+      --ctx-size 16384
+      --gpu-layers 100
+      --flash-attn auto
+      --jinja
+      -b 1024
+      -ub 1024
+      --temp 0.1
+      --top-p 0.9
+      --repeat-penalty 1.1
+      --n-predict 256
+      --mirostat 0
+    ports:
+      - "${AI__LLAMACPP}:${AI__LLAMACPP}"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:${AI__LLAMACPP}/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 60
+
+  open-webui:
+    container_name: open_webui_container
+    image: ghcr.io/open-webui/open-webui:main-slim
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+    ports:
+      - "${AI__OPENWEBUI}:8080"
+    environment:
+      WEBUI_AUTH: "False"
+      LLM_HOST: llamacpp
+      LLM_PORT: ${AI__LLAMACPP}
+      MCP_HOST: mcpo
+      MCP_PORT: ${ROS__MCP}
+    volumes:
+      - open-webui:/app/backend/data
+    depends_on:
+      llamacpp:
+        condition: service_healthy
+      mcpo:
+        condition: service_healthy
+
+
+volumes:
+  open-webui:
