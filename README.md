@@ -42,11 +42,33 @@ The Perceptor requires the AMR DevKit to be installed and configured first. Plea
 
 If Docker is not installed, please follow the [instructions](https://github.com/advantech-EdgeAI/AMR_DevKit/issues/1) to set it up.
 
+### 3. Clone the Repository
+
+Clone this repository to `~/ros2_ws/src`. (If you followed the installation guide in [AMR_DevKit](https://github.com/advantech-EdgeAI/AMR_DevKit?tab=readme-ov-file#installation-guide), the directory `~/ros2_wc/src` should be already existed.)
+
+```bash
+cd ~/ros2_ws/src
+git clone https://github.com/advantech-EdgeAI/AMR_Perceptor.git
+cd AMR_Perceptor
+```
+
 ## Usage / Quick Start
 
-### 1. Initialize the Hardware (DevKit)
+### 1. Start YOLO, MCP, llama.cpp, and Web UI
 
-In a new terminal, launch the AMR DevKit drivers. Using `yolo_rviz:=true` opens a viewer that shows AI detection results.:
+```bash
+$ docker compose up -d
+
+[+] Running 4/4
+ ✔ Container llamacpp_server_container  Healthy    11.4s
+ ✔ Container yolo_container             Started     1.0s
+ ✔ Container mcp_container              Healthy     5.9s
+ ✔ Container open_webui_container       Started    12.1s
+```
+
+### 2. Initialize the Hardware (DevKit)
+
+In terminal, launch the AMR DevKit drivers. Using `yolo_rviz:=true` opens a viewer that shows AI detection results.:
 
 ```bash
 ros2 launch amr_description bringup.launch.py yolo_rviz:=true preprocess:=true
@@ -58,17 +80,6 @@ ros2 launch amr_description bringup.launch.py yolo_rviz:=true preprocess:=true
 
 To prevent system crashes or errors, always close the RViz window first before using `Ctrl+C` to stop the processes in your terminals.
 
-### 2. Start YOLO, MCP, llama.cpp, and Web UI
-
-```bash
-$ docker compose up -d
-
-[+] Running 4/4
- ✔ Container llamacpp_server_container  Healthy    11.4s
- ✔ Container yolo_container             Started     1.0s
- ✔ Container mcp_container              Healthy     5.9s
- ✔ Container open_webui_container       Started    12.1s
-```
 
 ### 3. Open Web UI in browser
 
